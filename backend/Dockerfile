@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements/base.txt requirements/base.txt
-RUN pip install --no-cache-dir -r requirements/base.txt gunicorn daphne
+# Install Python dependencies (production includes base.txt)
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir -r requirements/production.txt daphne
 
 # Copy project
 COPY . .
