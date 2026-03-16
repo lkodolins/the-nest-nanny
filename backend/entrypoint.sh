@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings.production}"
+export DJANGO_SETTINGS_MODULE
+
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
     echo "Running migrations..."
     python manage.py migrate --noinput || true
