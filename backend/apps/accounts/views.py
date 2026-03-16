@@ -55,6 +55,34 @@ class RegisterNannyView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        role = request.data.get('role') or request.data.get('user_type') or 'family'
+
+        if role == 'nanny':
+            serializer = RegisterNannySerializer(data=request.data)
+        elif role == 'family':
+            serializer = RegisterFamilySerializer(data=request.data)
+        else:
+            return Response(
+                {'detail': 'Invalid role. Use "family" or "nanny".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        tokens = get_tokens_for_user(user)
+        return Response(
+            {
+                'user': UserSerializer(user).data,
+                'tokens': tokens,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
 

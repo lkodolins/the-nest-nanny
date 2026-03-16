@@ -47,6 +47,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const getApiErrorMessage = useCallback((err: unknown, fallback: string) => {
+    if (!err || typeof err !== 'object') return fallback
+
+    const maybe = err as Record<string, unknown>
+    if (typeof maybe.detail === 'string' && maybe.detail) return maybe.detail
+    if (typeof maybe.message === 'string' && maybe.message) return maybe.message
+
+    for (const value of Object.values(maybe)) {
+      if (Array.isArray(value) && typeof value[0] === 'string' && value[0]) {
+        return value[0]
+      }
+      if (typeof value === 'string' && value) {
+        return value
+      }
+    }
+
+    return fallback
+  }, [])
+
   // Restore session on mount: refresh token → fetch user profile
   useEffect(() => {
     let cancelled = false
@@ -93,17 +112,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         authService.storeRefreshToken(result.refreshToken)
         setUser(result.user)
       } catch (err: unknown) {
-        const message =
-          (err as { detail?: string })?.detail ||
-          (err as { message?: string })?.message ||
-          'Login failed. Please check your credentials.'
+        const message = getApiErrorMessage(
+          err,
+          'Login failed. Please check your credentials.',
+        )
         setError(message)
         throw err
       } finally {
         setIsLoading(false)
       }
     },
-    [],
+    [getApiErrorMessage],
   )
 
   const loginWithGoogle = useCallback(
@@ -116,17 +135,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         authService.storeRefreshToken(result.refreshToken)
         setUser(result.user)
       } catch (err: unknown) {
-        const message =
-          (err as { detail?: string })?.detail ||
-          (err as { message?: string })?.message ||
-          'Google login failed. Please try again.'
+        const message = getApiErrorMessage(
+          err,
+          'Google login failed. Please try again.',
+        )
         setError(message)
         throw err
       } finally {
         setIsLoading(false)
       }
     },
-    [],
+    [getApiErrorMessage],
   )
 
   const register = useCallback(
@@ -143,18 +162,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         authService.storeRefreshToken(result.refreshToken)
         setUser(result.user)
       } catch (err: unknown) {
-        const message =
-          (err as { detail?: string })?.detail ||
-          (err as { email?: string[] })?.email?.[0] ||
-          (err as { message?: string })?.message ||
-          'Registration failed. Please try again.'
+        const message = getApiErrorMessage(
+          err,
+          'Registration failed. Please try again.',
+        )
         setError(message)
         throw err
       } finally {
         setIsLoading(false)
       }
     },
-    [],
+    [getApiErrorMessage],
   )
 
   const logout = useCallback(async () => {
